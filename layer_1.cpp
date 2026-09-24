@@ -14,53 +14,53 @@ public:
     virtual std::vector<double> forward(const std::vector<double> input_data) = 0;
     virtual std::vector<double> backward(std::vector<double> error, double learning_rate) = 0; 
     //backward(∂L/∂ŷ , \nu)
+
 };
 
 class Sigmoid : public Layer 
 {
+    
     public:
+    std::vector<double> derivative_1;
     std::vector<double> forward (const std::vector<double> input_data) override
     {
         input = input_data;
         output = vectSigmoid(input);
+        derivative_1 = vectSigmoidDerivative(input);
+
         return output;
     }
     
     std::vector<double> backward(std::vector<double> error, double learning_rate) override
     {
-        std::vector<double> derivative = vectSigmoidDerivative(input);
         std::vector<double> grad_input;
-        for (int i = 0; i < derivative.size(); i++)
+        for (int i = 0; i < derivative_1.size(); i++)
         {
-            grad_input.push_back(derivative[i]*error[i]);
+            grad_input.push_back(derivative_1[i]*error[i]);
         }
         return grad_input;
-    }
-
-    std::vector<double> derivative_1_backpropagation()
-    {
-        
     }
 };
 
 class Relu : public Layer 
 {
     public:
+    std::vector<double> derivative_1;
     std::vector<double> forward(const std::vector<double> input_data) override
     {
         input  = input_data;
         output = vectRelu(input);
 
+        derivative_1 = vectReluDerivative(input);
         return output;
     }
 
     std::vector<double> backward(std::vector<double> error, double learning_rate) override
     {
-        std::vector<double> derivative = vectReluDerivative(input);
         std::vector<double> grad_input;
-        for (int i = 0; i < derivative.size(); ++i)
+        for (int i = 0; i < derivative_1.size(); ++i)
         {
-            grad_input.push_back(derivative[i] * error[i]);
+            grad_input.push_back(derivative_1[i] * error[i]);
         }   
         return grad_input;
     }
@@ -70,21 +70,23 @@ class LeakyRelu : public Layer
 {
     public: 
     double alpha = 0.01;
+    std::vector<double> derivative_1;
 
     std::vector<double> forward(const std::vector<double> input_data) override
     {
         input = input_data;
         output = vectLeakyRelu(input,alpha);
+        derivative_1 = vectLeakyReluDerivative(input,alpha);
+        
         return output; 
     }
 
     std::vector<double> backward(std::vector<double> error, double learning_rate) override
     {
-        std::vector<double> derivative = vectLeakyReluDerivative(input,alpha);
         std::vector<double> grad_input;
-        for (int i = 0; i<derivative.size(); i++)
+        for (int i = 0; i<derivative_1.size(); i++)
         {
-            grad_input.push_back(derivative[i] * error[i]);
+            grad_input.push_back(derivative_1[i] * error[i]);
         }
         return grad_input;
     }
@@ -93,20 +95,22 @@ class LeakyRelu : public Layer
 class Tanh : public Layer 
 {
     public:
+    std::vector<double> derivative_1;
+    
     std::vector<double> forward(const std::vector<double> input_data) override
     {
         input = input_data;
         output = vectTanh(input);
+        derivative_1 = vectTanhDerivative(input);
         return output;
     }
 
     std::vector<double> backward(std::vector<double> error, double learning_rate) override
     {
-        std::vector<double> derivative = vectTanhDerivative(input);
         std::vector<double> grad_input;
-        for (int i = 0; i < derivative.size(); i++)
+        for (int i = 0; i < derivative_1.size(); i++)
         {
-            grad_input.push_back(derivative[i] * error[i]);
+            grad_input.push_back(derivative_1[i] * error[i]);
         }
         return grad_input;
     }
@@ -140,7 +144,7 @@ class Linear : public Layer
     }
    
     //backpropagation 
-    std ::vector<double> backward(std::vector<double> error, double learning_rate) override
+    std::vector<double> backward(std::vector<double> error, double learning_rate) override
     {
         // error = ∂e/∂z
         // learning_rate = η
@@ -157,16 +161,16 @@ class Linear : public Layer
 
         weight_transpose = transpose(weights);
 
-        //gradiente respecto a bias
+        //gradiente respecto a bias  dL/db = error
         bias_error = error;
 
-        //gradiente respecto al input
+        //gradiente respecto al input dL/dx = w'@error
         for (int i = 0; i < weight_transpose.size(); i++)
         {
             input_error.push_back(dotProduct(weight_transpose[i],error));
         }
 
-        //Gradiente respecto a los pesos 
+        //Gradiente respecto a los pesos e@x'
         for (int j = 0; j < error.size(); j++)
         {
             std::vector<double> row;
@@ -189,7 +193,7 @@ class Linear : public Layer
         }
 
         return input_error;
-    }      
+    }   
 };
 
 

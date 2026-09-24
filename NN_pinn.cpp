@@ -107,7 +107,7 @@ class NN
         }
     }
 
-    std::vector<double> Derivative_BackPropagation()
+    std::vector<double> compute_derivative_1()
     {
         /*
         proceso a implementar:

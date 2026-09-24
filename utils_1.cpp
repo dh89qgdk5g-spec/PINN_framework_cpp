@@ -64,6 +64,24 @@ double dotProduct(std::vector<double> &v1, std::vector<double> &v2)
      return result;
 }
 
+std::vector<double> hadamardProduct(const std::vector<double> &v1, const std::vector<double> &v2)
+{
+    /**
+     * @brief Computes the Hadamard product (element-wise product) of two vectors
+     * @param[in] v1 The first vector
+     * @param[in] v2 The second vector
+     * @return A vector containing the element-wise product of the two vectors
+     */
+
+    // conviene añadir un mejsaje de error si v1.size() != v2.size()
+    std::vector<double> result(v1.size());
+    for(int entry = 0; entry<v1.size(); ++entry)
+    {
+        result[entry] = v1[entry]*v2[entry];
+    }
+    return result;
+}
+
 std::vector<double> scalarVectorMultiplication(std::vector<double> &v,double scalar)
 {
   /**
@@ -156,6 +174,8 @@ std::vector<double> biasInitializer(int size)
     }
     return bias;
 }
+
+
 
 
 
