@@ -11,6 +11,7 @@ class Layer
 public: 
     std::vector<double> input;
     std::vector<double> output;
+    std::vector<std::vector<double>> jacobian_1;
     virtual std::vector<double> forward(const std::vector<double> input_data) = 0;
     virtual std::vector<double> backward(std::vector<double> error, double learning_rate) = 0; 
     //backward(∂L/∂ŷ , \nu)
@@ -19,15 +20,19 @@ public:
 
 class Sigmoid : public Layer 
 {
-    
     public:
     std::vector<double> derivative_1;
+
     std::vector<double> forward (const std::vector<double> input_data) override
     {
+        //ANN
         input = input_data;
         output = vectSigmoid(input);
-        derivative_1 = vectSigmoidDerivative(input);
 
+        //PINN 
+        derivative_1 = vectSigmoidDerivative(input);
+        jacobian_1 = buildJacobian(derivative_1);
+        
         return output;
     }
     
@@ -47,11 +52,16 @@ class Relu : public Layer
     public:
     std::vector<double> derivative_1;
     std::vector<double> forward(const std::vector<double> input_data) override
+    
     {
+        //ANN
         input  = input_data;
         output = vectRelu(input);
 
+        //PINN
         derivative_1 = vectReluDerivative(input);
+        jacobian_1 = buildJacobian(derivative_1);
+
         return output;
     }
 
@@ -74,9 +84,14 @@ class LeakyRelu : public Layer
 
     std::vector<double> forward(const std::vector<double> input_data) override
     {
+        //ANN
         input = input_data;
         output = vectLeakyRelu(input,alpha);
+
+        //PINN
         derivative_1 = vectLeakyReluDerivative(input,alpha);
+        jacobian_1 = buildJacobian(derivative_1);
+
         
         return output; 
     }
@@ -99,9 +114,13 @@ class Tanh : public Layer
     
     std::vector<double> forward(const std::vector<double> input_data) override
     {
+        //ANN
         input = input_data;
         output = vectTanh(input);
+
+        //PINN
         derivative_1 = vectTanhDerivative(input);
+        jacobian_1 = buildJacobian(derivative_1);
         return output;
     }
 
@@ -140,6 +159,14 @@ class Linear : public Layer
         {
             output.push_back(dotProduct(weights[i],input) + bias[i]);
         }
+
+        /*
+        No es realmente el jacobiano de Linear, pero se hace una copia de weights con este
+        nombre para extraer el valor en NN_pinn.cpp de una manera mas sencila y poder hacer 
+        la secuencia de Multiplicaciones du/dx. 
+        */
+        
+        jacobian_1 = weights;
         return output;
     }
    
@@ -193,7 +220,9 @@ class Linear : public Layer
         }
 
         return input_error;
-    }   
+    } 
+    
+
 };
 
 

@@ -9,6 +9,19 @@
 #include <chrono>
 
 
+/*
+considerrar hacer:
+
+class Matrix
+{
+private:
+    std::size_t rows;
+    std::size_t cols;
+    std::vector<double> data;
+};
+
+*/
+
 std::vector<double> vInit(double begin, double end, int elements)
 {
     /**
@@ -63,6 +76,44 @@ double dotProduct(std::vector<double> &v1, std::vector<double> &v2)
      } 
      return result;
 }
+
+std::vector<std::vector<double>> buildJacobian(const std::vector<double> &v)
+{
+    std::vector < std::vector<double> > J(v.size(),std::vector<double> (v.size()))
+    
+    for(int i = 0; i<v.size(); ++i)
+    {
+        J[i][i] = v[i];
+    }
+}
+
+std::vector<double> multiply_Mv(const std::vector< std::vector<double> > &M,const std::vector<double> &v )
+{
+    std::vector<double> result;
+    for(int row = 0; row < M.size(); ++row )
+    {
+        result.push_back(dotProduct(M[row],v));
+    }
+    return result;
+}
+
+std::vector<std::vector<double>> multiply_MM(const std::vector<std::vector<double>> &A, const std::vector<std::vector<double>> &B)
+{
+    std::vector<std::vector<double>> C(A.size(),std::vector<double> (B[0].size()));
+    std::vector<std::vector<double>> B_T = transpose(B);
+
+    for (int row = 0; row<A.size(); ++row)
+    {
+        for (int col = 0; col<B_T.size(); ++col)
+        {
+          C[row][col] = dotProduct(A[row],B_T[col]);
+        }
+    }
+    return C;
+}
+
+
+
 
 std::vector<double> hadamardProduct(const std::vector<double> &v1, const std::vector<double> &v2)
 {

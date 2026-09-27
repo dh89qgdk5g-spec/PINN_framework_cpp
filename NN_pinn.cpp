@@ -21,18 +21,14 @@ class NN
     */
     
 
-
-
     void add(Layer* layer)
     {
         layers.emplace_back(layer); // construye el elemento dentro del vector {"layers"} pasando 'layer' como argumento al contructor de unique_ptr<layer>
     }
-    
     std::vector<double> predict(std::vector<double> input)
     {
         return forward_propagation(input);
     }
-
     std::vector<double> forward_propagation(const std::vector<double> input)
     {
         std::vector<double> output = input;
@@ -42,7 +38,6 @@ class NN
         }
         return output; 
     }
-
     void backward_propagation(const std::vector<double> &error, double learning_rate)
     {
         std::vector<double> grad = error; // permite tener una copia de error en grad y conservar el acceso al origial mediante error
@@ -52,7 +47,6 @@ class NN
             grad = (*it) -> backward(grad, learning_rate);
         }
     }
-
     void Train2D(const std::vector< std::vector<double> > &X, const std::vector< std::vector<double>> &y, int epochs, double learning_rate ) 
     {
         for (int epoch = 0; epoch < epochs ; ++epoch) 
@@ -80,7 +74,6 @@ class NN
             std::cout << "Epoch " << epoch + 1 << "/" << epochs << " - loss: " << total_loss / X.size() << std::endl; 
         }
     }
-
     void Train1D (const std::vector<double> &X, const std::vector<double> &Y, int epochs, double learning_rate)
     {
     
@@ -93,12 +86,16 @@ class NN
                 //f.prop
                 std::vector<double> output = forward_propagation(std::vector<double>{X[i]});
                 //std::cout << Y[i] - output[0] << std::endl;
+                
+                
+                
                 // calcular pérdida
                 double loss = MSEloss(std::vector<double>{Y[i]},output);
                 total_loss += loss;
-                std::vector<double> loss_derivative = MSElossDerivative(std::vector<double>{Y[i]},output); 
-    
+               
+               
                 //b.prop 
+                std::vector<double> loss_derivative = MSElossDerivative(std::vector<double>{Y[i]},output); 
                 backward_propagation(loss_derivative, learning_rate);
 
             }
@@ -107,29 +104,8 @@ class NN
         }
     }
 
-    std::vector<double> compute_derivative_1()
-    {
-        /*
-        proceso a implementar:
 
-        ultimas capas:
-            z = Wx + b
-            u = s(z) 
-        
-        derivada de la salida respecto a la entrada: 
-            du/dx = du/dz * dz/dx 
-            du/dx = s'(z) * w
-        */
-        
-
-        std::vector<double> field_variables = layers.back() -> input; //extrae el valor con el que se evalua la ultima función de activación(z) 
-        
-        for (auto it = layers.rbegin(); it != layers.rend(); ++it)
-        {
-            field_variables = (*it) -> derivative_1_backpropagation(field_variables); //se evalua con las funciones derivadas en orden inverso
-        }
-        return field_variables; 
-    }
+    
 
 
     
