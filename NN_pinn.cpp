@@ -19,25 +19,43 @@ class NN
         ├──[1] unique_ptr → layer B
         └──[2] unique_ptr → layer C
     */
+
+    std::vector<std::vector<double>> NetworkJacobian;
     
 
     void add(Layer* layer)
     {
         layers.emplace_back(layer); // construye el elemento dentro del vector {"layers"} pasando 'layer' como argumento al contructor de unique_ptr<layer>
     }
+
+
     std::vector<double> predict(std::vector<double> input)
     {
         return forward_propagation(input);
     }
+
+
     std::vector<double> forward_propagation(const std::vector<double> input)
     {
         std::vector<double> output = input;
+
         for (const auto &layer : layers) // en cada iteración &layer se convierte en una referencia a un elemento del vector {"layers"} [std::unique_ptr<layer>]
         {
             output = layer->forward(output); // ejecuta el método forward() del objeto al que apunta layer (layer que es una referencia a un elemento de la lista de punteros inteligentes)
         }
+
+
+        //Calculo del Jacobiano de Red
+        NetworkJacobian = layers.back() -> jacobian_1;
+        for(int i = layers.size()-2 ; i>=0; --i)
+        {
+            NetworkJacobian = multiply_MM(NetworkJacobian,layers[i]->jacobian_1);
+        }
+
         return output; 
     }
+
+
     void backward_propagation(const std::vector<double> &error, double learning_rate)
     {
         std::vector<double> grad = error; // permite tener una copia de error en grad y conservar el acceso al origial mediante error
@@ -47,6 +65,8 @@ class NN
             grad = (*it) -> backward(grad, learning_rate);
         }
     }
+
+
     void Train2D(const std::vector< std::vector<double> > &X, const std::vector< std::vector<double>> &y, int epochs, double learning_rate ) 
     {
         for (int epoch = 0; epoch < epochs ; ++epoch) 
@@ -74,6 +94,8 @@ class NN
             std::cout << "Epoch " << epoch + 1 << "/" << epochs << " - loss: " << total_loss / X.size() << std::endl; 
         }
     }
+
+
     void Train1D (const std::vector<double> &X, const std::vector<double> &Y, int epochs, double learning_rate)
     {
     
@@ -103,10 +125,4 @@ class NN
             std::cout << "Epoch " << epoch + 1 << "/" << epochs << " - loss: " << total_loss/X.size()  << std::endl; 
         }
     }
-
-
-    
-
-
-    
 };

@@ -1,6 +1,6 @@
 #include <iostream> 
 #include "utils_1.cpp"
-#include "nn.cpp"
+#include "NN_pinn.cpp"
 
 
 
@@ -27,13 +27,19 @@ int main(){
     
     
     
-    ann.Train1D(t,h,20000,.001);
+    ann.Train1D(t,h,1000,.001);
     
     std::vector<double> salida;
     salida.push_back( ann.predict(std::vector<double>{3.})[0]);
 
     
+    std::cout << std::endl;
+    std::cout << "Prediction: " << std::endl;
     vprint(salida);
     std::cout << 3*3 -.5* pow(3,2) << std::endl;
+
+    std::cout << "Network Jacobian: " << std::endl;
+    mprint(ann.NetworkJacobian);
+
     
 }

@@ -51,16 +51,26 @@ void vprint(const std::vector<double> &v)
     * @param v a constant reference to the std::vector of doubles to be printed
     */
 
-    std::cout << "{ ";
+    std::cout << "{";
     for (int i = 0; i < v.size(); i++)
     {
-        std::cout << v[i] << "  "; 
+        std::cout <<"  " << v[i]; 
     }
-    std::cout << '}';
+    std::cout << "  }";
     std::cout << std::endl;
 }
 
-double dotProduct(std::vector<double> &v1, std::vector<double> &v2)
+void mprint(const std::vector<std::vector<double>> &m)
+{
+    
+    for (int row = 0; row < m.size(); row ++)
+    {
+        vprint(m[row]);
+    }
+    
+}
+
+double dotProduct(const std::vector<double> &v1,const std::vector<double> &v2)
 {
     /**
      * @brief Computes the dot product of two vectors
@@ -79,12 +89,13 @@ double dotProduct(std::vector<double> &v1, std::vector<double> &v2)
 
 std::vector<std::vector<double>> buildJacobian(const std::vector<double> &v)
 {
-    std::vector < std::vector<double> > J(v.size(),std::vector<double> (v.size()))
+    std::vector < std::vector<double> > J(v.size(),std::vector<double> (v.size()));
     
-    for(int i = 0; i<v.size(); ++i)
+    for(int i = 0; i < v.size(); ++i)
     {
         J[i][i] = v[i];
     }
+    return J;
 }
 
 std::vector<double> multiply_Mv(const std::vector< std::vector<double> > &M,const std::vector<double> &v )
@@ -97,23 +108,52 @@ std::vector<double> multiply_Mv(const std::vector< std::vector<double> > &M,cons
     return result;
 }
 
+std::vector<std::vector<double>> transpose(const std::vector<std::vector<double>> &m)
+{
+    /**
+     * @brief Computes the transpose of a matrix
+     * @param[in] m The matrix to transpose
+     * @return The transpose of the matrix
+     */
+
+    std::vector<std::vector<double>> trans_vec(m[0].size(), std::vector<double>()); // crea un vector de m[0].size filas y lo llena convectores vacíos 
+    for (int i= 0; i< m.size(); i++)
+    {
+        for (int j = 0; j< m[i].size(); j++){
+            if (trans_vec[j].size() != m.size()) // redimensiona el numero de columnas de la fila j 
+                trans_vec[j].resize(m.size());
+            trans_vec[j][i] = m[i][j]; // rellena las filas y despues las columnas 
+        }
+    }
+    return trans_vec;
+}
+
 std::vector<std::vector<double>> multiply_MM(const std::vector<std::vector<double>> &A, const std::vector<std::vector<double>> &B)
 {
+    /*
+    Escribir un mejor manjeo de excepciones:
+    */
     std::vector<std::vector<double>> C(A.size(),std::vector<double> (B[0].size()));
     std::vector<std::vector<double>> B_T = transpose(B);
 
-    for (int row = 0; row<A.size(); ++row)
+    if(A[0].size() == B.size())
     {
-        for (int col = 0; col<B_T.size(); ++col)
+        for (int row = 0; row<A.size(); ++row)
         {
-          C[row][col] = dotProduct(A[row],B_T[col]);
+            for (int col = 0; col<B_T.size(); ++col)
+            {
+              C[row][col] = dotProduct(A[row],B_T[col]);
+            }
         }
     }
+    else 
+    {
+        std::cout << "Wrong dimentions for matix multiplication: " << std::endl;
+        std::cout << "Dimentions must be A[r,n] B[n,c]" << std::endl;
+    }
+
     return C;
 }
-
-
-
 
 std::vector<double> hadamardProduct(const std::vector<double> &v1, const std::vector<double> &v2)
 {
@@ -158,26 +198,6 @@ std::vector<double> subtract(std::vector<double> &v1, std::vector<double> &v2)
 
      std::transform(v1.begin(), v1.end(), v2.begin(), std::back_inserter(out), std::minus<double>());
      return out;
-}
-
-std::vector<std::vector<double>> transpose(std::vector<std::vector<double>> &m)
-{
-    /**
-     * @brief Computes the transpose of a matrix
-     * @param[in] m The matrix to transpose
-     * @return The transpose of the matrix
-     */
-
-    std::vector<std::vector<double>> trans_vec(m[0].size(), std::vector<double>()); // crea un vector de m[0].size filas y lo llena convectores vacíos 
-    for (int i= 0; i< m.size(); i++)
-    {
-        for (int j = 0; j< m[i].size(); j++){
-            if (trans_vec[j].size() != m.size()) // redimensiona el numero de columnas de la fila j 
-                trans_vec[j].resize(m.size());
-            trans_vec[j][i] = m[i][j]; // rellena las filas y despues las columnas 
-        }
-    }
-    return trans_vec;
 }
 
 std::vector<std::vector<double>> uniformWeightInitializer(int rows, int cols)
