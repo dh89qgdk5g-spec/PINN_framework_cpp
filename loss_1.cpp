@@ -1,11 +1,10 @@
 #pragma once 
-#include <vector>
-#include <math.h>
+#include <Eigen/Dense>
 #include <cmath>
 
 
 //binary cross-entropy loss (BCE)
-double BCEloss(std::vector<double> true_label, std::vector<double> pred_prob)
+double BCEloss(Eigen::VectorXd true_label, Eigen::VectorXd pred_prob)
 {  /**
    * Binary Cross Entropy Loss
    * @param true_label true labels of the data
@@ -22,7 +21,7 @@ double BCEloss(std::vector<double> true_label, std::vector<double> pred_prob)
     return loss;
 }
 
-std::vector<double> BCElossDerivative(std::vector<double> true_label, std::vector<double> pred_prob)
+Eigen::VectorXd BCElossDerivative(Eigen::VectorXd true_label, Eigen::VectorXd pred_prob)
 {
    /**
    * Compute derivative of binary cross entropy loss
@@ -30,12 +29,13 @@ std::vector<double> BCElossDerivative(std::vector<double> true_label, std::vecto
    * @param pred_prob predicted probabilities
    * @return derivative of binary cross entropy loss
    */
-   std::vector<double> dev = {(pred_prob[0] - true_label[0]) / ((pred_prob[0])*(1 - pred_prob[0]))};
+   Eigen::VectorXd dev(1);
+   dev[0] = (pred_prob[0] - true_label[0]) / ((pred_prob[0])*(1 - pred_prob[0]));
    return dev;
 }
 
 //mean-scquared error loss 
-double MSEloss(std::vector<double> true_label, std::vector<double> pred)
+double MSEloss(Eigen::VectorXd true_label, Eigen::VectorXd pred)
 {
     /**
    * Mean Squared Error Loss
@@ -53,7 +53,7 @@ double MSEloss(std::vector<double> true_label, std::vector<double> pred)
     return loss;
 }
 
-std::vector<double> MSElossDerivative(std::vector<double> true_label, std::vector<double> pred)
+Eigen::VectorXd MSElossDerivative(Eigen::VectorXd true_label, Eigen::VectorXd pred)
 {
     /**
    * Compute derivative of mean squared error loss
@@ -61,7 +61,6 @@ std::vector<double> MSElossDerivative(std::vector<double> true_label, std::vecto
    * @param pred predicted values
    * @return derivative of mean squared error loss
    */
-    std::vector<double> sub = subtract(pred, true_label);
-    std::vector<double> dev = scalarVectorMultiplication(sub,2);
+    Eigen::VectorXd dev = 2.0 * (pred - true_label);
     return dev;
 }

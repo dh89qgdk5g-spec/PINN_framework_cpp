@@ -1,6 +1,6 @@
 #pragma once 
 
-#include <vector>
+#include <Eigen/Dense>
 #include <memory>
 #include <iostream>
 #include "layer_1.cpp"
@@ -22,20 +22,19 @@ class NN
     
 
 
-
     void add(Layer* layer)
     {
         layers.emplace_back(layer); // construye el elemento dentro del vector {"layers"} pasando 'layer' como argumento al contructor de unique_ptr<layer>
     }
     
-    std::vector<double> predict(std::vector<double> input)
+    Eigen::VectorXd predict(Eigen::VectorXd input)
     {
         return forward_propagation(input);
     }
 
-    std::vector<double> forward_propagation(const std::vector<double> input)
+    Eigen::VectorXd forward_propagation(const Eigen::VectorXd input)
     {
-        std::vector<double> output = input;
+        Eigen::VectorXd output = input;
         for (const auto &layer : layers) // en cada iteración &layer se convierte en una referencia a un elemento del vector {"layers"} [std::unique_ptr<layer>]
         {
             output = layer->forward(output); // ejecuta el método forward() del objeto al que apunta layer (layer que es una referencia a un elemento de la lista de punteros inteligentes)
@@ -43,9 +42,9 @@ class NN
         return output; 
     }
 
-    void backward_propagation(const std::vector<double> &error, double learning_rate)
+    void backward_propagation(const Eigen::VectorXd &error, double learning_rate)
     {
-        std::vector<double> grad = error; // permite tener una copia de error en grad y conservar el acceso al origial mediante error
+        Eigen::VectorXd grad = error; // permite tener una copia de error en grad y conservar el acceso al origial mediante error
         for (auto it = layers.rbegin(); it != layers.rend(); ++it ) // rbegin() me dice que el iterador comienza al final y aumenta en sentido contrario 
         {
             // [it] funciona como un puntero que apunta a un elemento del vector y [*it] accede al contenido de esa posición 
@@ -55,8 +54,34 @@ class NN
 
     
 
-    void Train2D(const std::vector< std::vector<double> > &X, const std::vector< std::vector<double>> &y, int epochs, double learning_rate ) 
+    void Train2D(const std::vector< Eigen::VectorXd > &X, const std::vector< Eigen::VectorXd> &y, int epochs, double learning_rate ) 
     {
+        /*
+        epoch
+        │
+        ├── dato 1: (x₁,u₁)
+        │     │
+        │     ├── forward
+        │     ├── û₁
+        │     ├── loss = (û₁-u₁)²
+        │     └── backprop → actualiza W,b
+        │
+        ├── dato 2: (x₂,u₂)
+        │     │
+        │     ├── forward
+        │     ├── û₂
+        │     ├── loss = (û₂-u₂)²
+        │     └── backprop → actualiza W,b
+        │
+        ├── dato 3: (x₃,u₃)
+        │     ..
+        │
+        └── dato N
+            │
+            └── backprop → actualiza W,b
+
+        fin epoch
+        */
         for (int epoch = 0; epoch < epochs ; ++epoch) 
         {
             double total_loss = 0. ;
@@ -65,13 +90,13 @@ class NN
             for (size_t i = 0; i < X.size(); ++i) // por cada epoch  recorre los [i] elementos de x, y con el elemento [i] hace fprop y bprop
             {
                 //forward pass 
-                std::vector<double> output = forward_propagation(X[i]);
+                Eigen::VectorXd output = forward_propagation(X[i]);
 
                 // Calcular pérdida
                 double loss = BCEloss(y[i], output);
                 total_loss += loss;
 
-                std::vector<double> loss_derivative = BCElossDerivative(y[i], output);
+                Eigen::VectorXd loss_derivative = BCElossDerivative(y[i], output);
                 // backward pass 
                 backward_propagation(loss_derivative, learning_rate);
             }
@@ -83,8 +108,34 @@ class NN
         }
     }
 
-    void Train1D (const std::vector<double> &X, const std::vector<double> &Y, int epochs, double learning_rate)
+    void Train1D (const Eigen::VectorXd &X, const Eigen::VectorXd &Y, int epochs, double learning_rate)
     {
+        /*
+        epoch
+        │
+        ├── dato 1: (x₁,u₁)
+        │     │
+        │     ├── forward
+        │     ├── û₁
+        │     ├── loss = (û₁-u₁)²
+        │     └── backprop → actualiza W,b
+        │
+        ├── dato 2: (x₂,u₂)
+        │     │
+        │     ├── forward
+        │     ├── û₂
+        │     ├── loss = (û₂-u₂)²
+        │     └── backprop → actualiza W,b
+        │
+        ├── dato 3: (x₃,u₃)
+        │     ..
+        │
+        └── dato N
+            │
+            └── backprop → actualiza W,b
+
+        fin epoch
+        */
     
         for (int epoch = 0; epoch < epochs ; ++epoch)
         {
@@ -93,12 +144,17 @@ class NN
             for (int i  = 0; i <X.size(); ++i)
             {
                 //f.prop
-                std::vector<double> output = forward_propagation(std::vector<double>{X[i]});
+                Eigen::VectorXd input(1);
+                input[0] = X[i];
+                Eigen::VectorXd output = forward_propagation(input);
                 //std::cout << Y[i] - output[0] << std::endl;
+               
                 // calcular pérdida
-                double loss = MSEloss(std::vector<double>{Y[i]},output);
+                Eigen::VectorXd true_label(1);
+                true_label[0] = Y[i];
+                double loss = MSEloss(true_label, output);
                 total_loss += loss;
-                std::vector<double> loss_derivative = MSElossDerivative(std::vector<double>{Y[i]},output); 
+                Eigen::VectorXd loss_derivative = MSElossDerivative(true_label, output); 
     
                 //b.prop 
                 backward_propagation(loss_derivative, learning_rate);

@@ -1,4 +1,5 @@
 #include <iostream> 
+#include <cmath>
 #include "utils_1.cpp"
 #include "NN_pinn.cpp"
 
@@ -7,12 +8,15 @@
 int main(){
     // test data generation:
 
-    std::vector<double> t = vInit(0,6,100);
-    std::vector<double> h = t;
+    Eigen::VectorXd t = vInit(0,6,100);
+    Eigen::VectorXd h = t;
 
-    std::transform(h.begin(),h.end(),h.begin(),[](double h){return 3*h -.5* pow(h,2);});
-    vprint(t);
-    vprint(h);
+    for (int i = 0; i < h.size(); i++)
+    {
+        h[i] = 3*h[i] - .5 * pow(h[i], 2);
+    }
+    //vprint(t);
+    //vprint(h);
 
 
     NN ann;
@@ -26,16 +30,16 @@ int main(){
     ann.add(new Linear(5,1));
     
     
+    ann.Train1D(t,h,2000,.001);
     
-    ann.Train1D(t,h,1000,.001);
-    
-    std::vector<double> salida;
-    salida.push_back( ann.predict(std::vector<double>{3.})[0]);
+    Eigen::VectorXd input(1);
+    input[0] = 3.0;
+    double salida = ann.predict(input)[0];
 
     
     std::cout << std::endl;
     std::cout << "Prediction: " << std::endl;
-    vprint(salida);
+    std::cout << "{  " << salida << "  }" << std::endl;
     std::cout << 3*3 -.5* pow(3,2) << std::endl;
 
     std::cout << "Network Jacobian: " << std::endl;

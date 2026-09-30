@@ -1,5 +1,5 @@
 #pragma once
-#include <vector> 
+#include <Eigen/Dense>
 #include <iostream>
 
 #include "utils_1.cpp"
@@ -9,11 +9,11 @@
 class Layer 
 {
 public: 
-    std::vector<double> input;
-    std::vector<double> output;
-    std::vector<std::vector<double>> jacobian_1;
-    virtual std::vector<double> forward(const std::vector<double> input_data) = 0;
-    virtual std::vector<double> backward(std::vector<double> error, double learning_rate) = 0; 
+    Eigen::VectorXd input;
+    Eigen::VectorXd output;
+    Eigen::MatrixXd jacobian_1;
+    virtual Eigen::VectorXd forward(const Eigen::VectorXd input_data) = 0;
+    virtual Eigen::VectorXd backward(Eigen::VectorXd error, double learning_rate) = 0; 
     //backward(∂L/∂ŷ , \nu)
 
 };
@@ -21,9 +21,9 @@ public:
 class Sigmoid : public Layer 
 {
     public:
-    std::vector<double> derivative_1;
+    Eigen::VectorXd derivative_1;
 
-    std::vector<double> forward (const std::vector<double> input_data) override
+    Eigen::VectorXd forward (const Eigen::VectorXd input_data) override
     {
         //ANN
         input = input_data;
@@ -36,13 +36,9 @@ class Sigmoid : public Layer
         return output;
     }
     
-    std::vector<double> backward(std::vector<double> error, double learning_rate) override
+    Eigen::VectorXd backward(Eigen::VectorXd error, double learning_rate) override
     {
-        std::vector<double> grad_input;
-        for (int i = 0; i < derivative_1.size(); i++)
-        {
-            grad_input.push_back(derivative_1[i]*error[i]);
-        }
+        Eigen::VectorXd grad_input = derivative_1.cwiseProduct(error);
         return grad_input;
     }
 };
@@ -50,8 +46,8 @@ class Sigmoid : public Layer
 class Relu : public Layer 
 {
     public:
-    std::vector<double> derivative_1;
-    std::vector<double> forward(const std::vector<double> input_data) override
+    Eigen::VectorXd derivative_1;
+    Eigen::VectorXd forward(const Eigen::VectorXd input_data) override
     
     {
         //ANN
@@ -65,13 +61,9 @@ class Relu : public Layer
         return output;
     }
 
-    std::vector<double> backward(std::vector<double> error, double learning_rate) override
+    Eigen::VectorXd backward(Eigen::VectorXd error, double learning_rate) override
     {
-        std::vector<double> grad_input;
-        for (int i = 0; i < derivative_1.size(); ++i)
-        {
-            grad_input.push_back(derivative_1[i] * error[i]);
-        }   
+        Eigen::VectorXd grad_input = derivative_1.cwiseProduct(error);
         return grad_input;
     }
 }; 
@@ -80,9 +72,9 @@ class LeakyRelu : public Layer
 {
     public: 
     double alpha = 0.01;
-    std::vector<double> derivative_1;
+    Eigen::VectorXd derivative_1;
 
-    std::vector<double> forward(const std::vector<double> input_data) override
+    Eigen::VectorXd forward(const Eigen::VectorXd input_data) override
     {
         //ANN
         input = input_data;
@@ -96,13 +88,9 @@ class LeakyRelu : public Layer
         return output; 
     }
 
-    std::vector<double> backward(std::vector<double> error, double learning_rate) override
+    Eigen::VectorXd backward(Eigen::VectorXd error, double learning_rate) override
     {
-        std::vector<double> grad_input;
-        for (int i = 0; i<derivative_1.size(); i++)
-        {
-            grad_input.push_back(derivative_1[i] * error[i]);
-        }
+        Eigen::VectorXd grad_input = derivative_1.cwiseProduct(error);
         return grad_input;
     }
 };
@@ -110,9 +98,9 @@ class LeakyRelu : public Layer
 class Tanh : public Layer 
 {
     public:
-    std::vector<double> derivative_1;
+    Eigen::VectorXd derivative_1;
     
-    std::vector<double> forward(const std::vector<double> input_data) override
+    Eigen::VectorXd forward(const Eigen::VectorXd input_data) override
     {
         //ANN
         input = input_data;
@@ -124,13 +112,9 @@ class Tanh : public Layer
         return output;
     }
 
-    std::vector<double> backward(std::vector<double> error, double learning_rate) override
+    Eigen::VectorXd backward(Eigen::VectorXd error, double learning_rate) override
     {
-        std::vector<double> grad_input;
-        for (int i = 0; i < derivative_1.size(); i++)
-        {
-            grad_input.push_back(derivative_1[i] * error[i]);
-        }
+        Eigen::VectorXd grad_input = derivative_1.cwiseProduct(error);
         return grad_input;
     }
 };
@@ -140,8 +124,8 @@ class Linear : public Layer
     public:
     int input_neuron;
     int output_neuron;
-    std::vector<std::vector<double>> weights;
-    std::vector<double> bias;
+    Eigen::MatrixXd weights;
+    Eigen::VectorXd bias;
 
     Linear(int num_in, int num_out)
     {
@@ -151,14 +135,10 @@ class Linear : public Layer
         bias = biasInitializer(num_out);
     }
 
-    std::vector<double> forward(const std::vector<double> input_data) override
+    Eigen::VectorXd forward(const Eigen::VectorXd input_data) override
     {
         input = input_data;
-        output.clear();
-        for (int i = 0; i < output_neuron; i++)
-        {
-            output.push_back(dotProduct(weights[i],input) + bias[i]);
-        }
+        output = weights * input + bias;
 
         /*
         No es realmente el jacobiano de Linear, pero se hace una copia de weights con este
@@ -171,58 +151,29 @@ class Linear : public Layer
     }
    
     //backpropagation 
-    std::vector<double> backward(std::vector<double> error, double learning_rate) override
+    Eigen::VectorXd backward(Eigen::VectorXd error, double learning_rate) override
     {
         // error = ∂e/∂z
         // learning_rate = η
 
-        std::vector<double> input_error;
-        std::vector<std::vector<double>> weight_error;
-        std::vector<double> bias_error;
-        std::vector<std::vector<double>> weight_transpose;
-
-        weight_error.clear();
-        bias_error.clear();
-        input_error.clear();
-        weight_transpose.clear();
-
-        weight_transpose = transpose(weights);
-
-        //gradiente respecto a bias  dL/db = error
-        bias_error = error;
-
         //gradiente respecto al input dL/dx = w'@error
-        for (int i = 0; i < weight_transpose.size(); i++)
-        {
-            input_error.push_back(dotProduct(weight_transpose[i],error));
-        }
+        Eigen::VectorXd input_error = weights.transpose() * error;
 
         //Gradiente respecto a los pesos e@x'
-        for (int j = 0; j < error.size(); j++)
-        {
-            std::vector<double> row;
-            for (int i = 0; i < input.size(); i++)
-            {
-                row.push_back(error[j] * input[i]);
-            }
-            weight_error.push_back(row);
-        }
+        Eigen::MatrixXd weight_error = error * input.transpose();
+
+        //gradiente respecto a bias  dL/db = error
+        Eigen::VectorXd bias_error = error;
 
         //actualización de bias 
-        std::vector<double> delta_bias = scalarVectorMultiplication(bias_error, learning_rate);
-        bias = subtract(bias, delta_bias);
+        bias = bias - learning_rate * bias_error;
 
         //actualización de pesos 
-        for (int i = 0; i < weight_error.size(); i++)
-        {
-            std::vector<double> delta_weight = scalarVectorMultiplication(weight_error[i],learning_rate);
-            weights[i] = subtract(weights[i], delta_weight);
-        }
+        weights = weights - learning_rate * weight_error;
 
         return input_error;
     } 
     
 
 };
-
 

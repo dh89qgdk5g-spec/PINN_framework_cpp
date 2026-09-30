@@ -2,7 +2,7 @@
 
 
 #include <cmath>
-#include <vector>
+#include <Eigen/Dense>
 #include <iostream>
 
 
@@ -29,31 +29,29 @@ double sigmoidDerivative(double x)
 }
 
 
-std::vector<double> vectSigmoid(const std::vector<double> x)
+Eigen::VectorXd vectSigmoid(const Eigen::VectorXd &x)
 {
     /**
      * A vectorized version of the sigmoid function.
      * @param x the input vector
      * @return a vector where each element is the sigmoid of the corresponding element in x
      */
-    std::vector<double> result;
-    result.reserve(x.size());
-    for (double i : x)
-        result.push_back(sigmoid(i));
+    Eigen::VectorXd result(x.size());
+    for (int i = 0; i < x.size(); i++)
+        result[i] = sigmoid(x[i]);
     return result;
 }
 
-std::vector<double> vectSigmoidDerivative(const std::vector<double> x)
+Eigen::VectorXd vectSigmoidDerivative(const Eigen::VectorXd &x)
 {
     /**
      * A vectorized version of the derivative of the sigmoid function.
      * @param x the input vector
      * @return a vector where each element is the derivative of the sigmoid of the corresponding element in x
      */
-    std::vector<double> result;
-    result.reserve(x.size());
-    for (double i : x)
-        result.push_back(sigmoidDerivative(i));
+    Eigen::VectorXd result(x.size());
+    for (int i = 0; i < x.size(); i++)
+        result[i] = sigmoidDerivative(x[i]);
     return result;
 }
 
@@ -80,29 +78,27 @@ double reluDerivative(double x)
     return ( x>= 0) ? 1.0 : 0.0;
 }
 
-std::vector<double> vectRelu(const std::vector<double> x)
+Eigen::VectorXd vectRelu(const Eigen::VectorXd &x)
 { /**
    * A vectorized version of the Rectified Linear Unit (ReLU) activation function.
    * @param x the input vector
    * @return a vector where each element is the ReLU of the corresponding element in x
    */
-    std::vector<double> result;
-    result.reserve(x.size());
-    for (double i : x)
-        result.push_back(relu(i));
+    Eigen::VectorXd result(x.size());
+    for (int i = 0; i < x.size(); i++)
+        result[i] = relu(x[i]);
     return result;
 }
 
-std::vector<double> vectReluDerivative(const std::vector<double> x)
+Eigen::VectorXd vectReluDerivative(const Eigen::VectorXd &x)
 { /**
    * A vectorized version of the derivative of the Rectified Linear Unit (ReLU) activation function.
    * @param x the input vector
    * @return a vector where each element is the derivative of the ReLU function of the corresponding element in x
    */
-    std::vector<double> result;
-    result.reserve(x.size());
-    for (double i : x)
-        result.push_back(reluDerivative(i));
+    Eigen::VectorXd result(x.size());
+    for (int i = 0; i < x.size(); i++)
+        result[i] = reluDerivative(x[i]);
     return result;
 }
 
@@ -129,31 +125,29 @@ double leakyReluDerivative(double x, double alpha = 0.01)
     return (x >= 0) ? 1.0 : alpha;
 }
 
-std::vector<double> vectLeakyRelu(const std::vector<double> x, double alpha = 0.01)
+Eigen::VectorXd vectLeakyRelu(const Eigen::VectorXd &x, double alpha = 0.01)
 { /**
    * A vectorized version of the Leaky Rectified Linear Unit (Leaky ReLU) activation function.
    * @param x the input vector
    * @param alpha the leak rate, defaults to 0.01
    * @return a vector where each element is the Leaky ReLU of the corresponding element in x
    */
-    std::vector<double> result;
-    result.reserve(x.size());
-    for (double i : x)
-        result.push_back(leakyRelu(i, alpha));
+    Eigen::VectorXd result(x.size());
+    for (int i = 0; i < x.size(); i++)
+        result[i] = leakyRelu(x[i], alpha);
     return result;
 }
 
-std::vector<double> vectLeakyReluDerivative(const std::vector<double> x, double alpha = 0.01)
+Eigen::VectorXd vectLeakyReluDerivative(const Eigen::VectorXd &x, double alpha = 0.01)
 { /**
    * A vectorized version of the derivative of the Leaky Rectified Linear Unit (Leaky ReLU) activation function.
    * @param x the input vector
    * @param alpha the leak rate, defaults to 0.01
    * @return a vector where each element is the derivative of the Leaky ReLU function of the corresponding element in x
    */
-    std::vector<double> result;
-    result.reserve(x.size());
-    for (double i : x)
-        result.push_back(leakyReluDerivative(i, alpha));
+    Eigen::VectorXd result(x.size());
+    for (int i = 0; i < x.size(); i++)
+        result[i] = leakyReluDerivative(x[i], alpha);
     return result;
 }
 
@@ -178,28 +172,26 @@ double tanhDerivative(double x)
     return 1 - pow(custom_tanh(x), 2);
 }
 
-std::vector<double> vectTanh(const std::vector<double> x)
+Eigen::VectorXd vectTanh(const Eigen::VectorXd &x)
 { /**
    * A vectorized version of the Hyperbolic Tangent (tanh) activation function.
    * @param x the input vector
    * @return a vector where each element is the tanh of the corresponding element in x
    */
-    std::vector<double> result;
-    result.reserve(x.size());
-    for (double i : x)
-        result.push_back(custom_tanh(i));
+    Eigen::VectorXd result(x.size());
+    for (int i = 0; i < x.size(); i++)
+        result[i] = custom_tanh(x[i]);
     return result;
 }
 
-std::vector<double> vectTanhDerivative(const std::vector<double> x)
+Eigen::VectorXd vectTanhDerivative(const Eigen::VectorXd &x)
 { /**
    * A vectorized version of the derivative of the Hyperbolic Tangent (tanh) activation function.
    * @param x the input vector
    * @return a vector where each element is the derivative of the tanh function of the corresponding element in x
    */
-    std::vector<double> result;
-    result.reserve(x.size());
-    for (double i : x)
-        result.push_back(tanhDerivative(i));
+    Eigen::VectorXd result(x.size());
+    for (int i = 0; i < x.size(); i++)
+        result[i] = tanhDerivative(x[i]);
     return result;
 }
