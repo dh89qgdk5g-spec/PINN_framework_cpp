@@ -3,12 +3,14 @@
 #include <Eigen/Dense>
 #include <memory>
 #include <iostream>
+#include "Eigen/src/Core/Matrix.h"
 #include "layer_1.cpp"
 #include "loss_1.cpp"
 
 class NN 
 {
     public: 
+    Eigen::MatrixXd NetworkJacobian;
     std::vector< std::unique_ptr<Layer> > layers; // vector de punteros inteligentes que apuntan a objetos de tipo "Layer"
     /*
     NN       ESTRUCTURA DE OBJETO:
@@ -20,20 +22,15 @@ class NN
         └──[2] unique_ptr → layer C
     */
 
-    Eigen::MatrixXd NetworkJacobian;
-    
-
     void add(Layer* layer)
     {
         layers.emplace_back(layer); // construye el elemento dentro del vector {"layers"} pasando 'layer' como argumento al contructor de unique_ptr<layer>
     }
 
-
     Eigen::VectorXd predict(Eigen::VectorXd input)
     {
         return forward_propagation(input);
     }
-
 
     Eigen::VectorXd forward_propagation(const Eigen::VectorXd input)
     {
@@ -55,17 +52,29 @@ class NN
         return output; 
     }
 
-
+    /*
     void backward_propagation(const Eigen::VectorXd &error, double learning_rate)
     {
         Eigen::VectorXd grad = error; // permite tener una copia de error en grad y conservar el acceso al origial mediante error
+        
         for (auto it = layers.rbegin(); it != layers.rend(); ++it ) // rbegin() me dice que el iterador comienza al final y aumenta en sentido contrario 
         {
             // [it] funciona como un puntero que apunta a un elemento del vector y [*it] accede al contenido de esa posición 
             grad = (*it) -> backward(grad, learning_rate);
         }
     }
+    */
 
+
+    void backward_propagation(Layer::backwardOutput & derivatives, double learning_rate)
+    {
+        Layer::backwardOutput grad  = derivatives;
+
+        for (auto it = layers.rbegin(); it != layers.rend(); ++it)
+        {
+            grad = (*it) -> backward(grad.error, grad.sensitivity, learning_rate);
+        }
+    }
 
     void Train2D(const std::vector< Eigen::VectorXd > &X, const std::vector< Eigen::VectorXd> &y, int epochs, double learning_rate ) 
     {
@@ -95,7 +104,6 @@ class NN
         }
     }
 
-
     void Train1D (const Eigen::VectorXd &X, const Eigen::VectorXd &Y, int epochs, double learning_rate)
     {
     
@@ -110,8 +118,7 @@ class NN
                 input[0] = X[i];
                 Eigen::VectorXd output = forward_propagation(input);
                 //std::cout << Y[i] - output[0] << std::endl;
-                
-                
+                               
                 
                 // calcular pérdida
                 Eigen::VectorXd true_label(1);
@@ -119,14 +126,20 @@ class NN
                 double loss = MSEloss(true_label, output);
                 total_loss += loss;
                
-               
                 //b.prop 
-                Eigen::VectorXd loss_derivative = MSElossDerivative(true_label, output); 
-                backward_propagation(loss_derivative, learning_rate);
+                Eigen::VectorXd data_loss_derivative = MSElossDerivative(true_label, output);
+                Eigen::VectorXd physics_loss_derivative = Eigen::VectorXd::Ones(data_loss_derivative.rows());
+
+                Layer::backwardOutput losses;
+                losses.error = data_loss_derivative;
+                losses.sensitivity = physics_loss_derivative;
+                
+                backward_propagation(losses, learning_rate);
 
             }
 
             std::cout << "Epoch " << epoch + 1 << "/" << epochs << " - loss: " << total_loss/X.size()  << std::endl; 
         }
     }
+    
 };
