@@ -1,10 +1,7 @@
 #pragma once 
 
-
 #include <cmath>
 #include <Eigen/Dense>
-#include <iostream>
-
 
 double sigmoid(double x)
 {
@@ -28,6 +25,15 @@ double sigmoidDerivative(double x)
     return exp(x) / pow((exp(x)+1),2);
 }
 
+double sigmoid2Derivative(double x)
+{
+    /*
+    * The  second derivative of the sigmoid function.
+    * @param x the input value
+    * @return the output value of the derivative of the sigmoid function
+    */
+    return sigmoid(x) * (1-sigmoid(x)) * (1-2*sigmoid(x));
+}
 
 Eigen::VectorXd vectSigmoid(const Eigen::VectorXd &x)
 {
@@ -52,6 +58,19 @@ Eigen::VectorXd vectSigmoidDerivative(const Eigen::VectorXd &x)
     Eigen::VectorXd result(x.size());
     for (int i = 0; i < x.size(); i++)
         result[i] = sigmoidDerivative(x[i]);
+    return result;
+}
+
+Eigen::VectorXd vectSigmoid2Derivative(const Eigen::VectorXd &x)
+{
+    /*
+     * A vectorized version of the derivative of the sigmoid function.
+     * @param x the input vector
+     * @return a vector where each element is the second derivative of the sigmoid of the corresponding element in x
+    */
+    Eigen::VectorXd result(x.size());
+    for (int i = 0; i < x.size(); i++)
+        result[i] = sigmoid2Derivative(x[i]);
     return result;
 }
 
@@ -172,6 +191,16 @@ double tanhDerivative(double x)
     return 1 - pow(custom_tanh(x), 2);
 }
 
+double tanh2Derivative(double x)
+{
+   /**
+   * The derivative of the Hyperbolic Tangent (tanh) activation function.
+   * @param x the input value
+   * @return the output value of the second derivative of the tanh function
+   */
+    return -2*custom_tanh(x)+2*pow(custom_tanh(x),3);
+}
+
 Eigen::VectorXd vectTanh(const Eigen::VectorXd &x)
 { /**
    * A vectorized version of the Hyperbolic Tangent (tanh) activation function.
@@ -195,3 +224,18 @@ Eigen::VectorXd vectTanhDerivative(const Eigen::VectorXd &x)
         result[i] = tanhDerivative(x[i]);
     return result;
 }
+
+Eigen::VectorXd vectTanh2Derivative(const Eigen::VectorXd &x)
+{ /**
+   * A vectorized version of the derivative of the Hyperbolic Tangent (tanh) activation function.
+   * @param x the input vector
+   * @return a vector where each element is the second derivative of the tanh function of the corresponding element in x
+   */
+    Eigen::VectorXd result(x.size());
+    for (int i = 0; i < x.size(); i++)
+        result[i] = tanh2Derivative(x[i]);
+    return result;
+}
+
+
+

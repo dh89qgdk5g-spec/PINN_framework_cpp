@@ -64,3 +64,13 @@ Eigen::VectorXd MSElossDerivative(Eigen::VectorXd true_label, Eigen::VectorXd pr
     Eigen::VectorXd dev = 2.0 * (pred - true_label);
     return dev;
 }
+
+double computeResidual (Eigen::VectorXd residue_Vector)
+{
+    double residue = 0;
+    for(int n = 0; n < residue_Vector.rows(); n++)
+    {
+        residue += pow(residue_Vector(n),2);
+    }
+    return residue;
+}

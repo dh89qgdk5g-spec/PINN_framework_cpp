@@ -2,10 +2,12 @@
 // import dependencies:
 
 #include <iostream>
+
 #include <random>
 #include <chrono>
-#include <Eigen/Dense>
 
+#include <Eigen/Dense>
+#include <vector>
 
 Eigen::VectorXd vInit(double begin, double end, int elements)
 {
@@ -118,4 +120,37 @@ Eigen::VectorXd biasInitializer(int size)
 }
 
 
+std::vector<Eigen::MatrixXd> tensorTransform (Eigen::MatrixXd A, std::vector<Eigen::MatrixXd> T)
+{
+    /*
+    * @brief performs the [A] transformation of the {[T]} tensor, computed similarly as [A]@{x}, 
+    * but each entry [A]_ij multiplies a whole matrix [T]
+    *
+    * @param[in] A the transformation matrix of dimentions [i,j]
+    * @param[in] T the tensor to be transformed of dimentions {i} where {[u,v]_i}
+    *
+    * @return the trasnformed tensor, stores as a vector of i matrixes {[T1],[T2],...[Ti]}
+    */
+    int c = A.cols(); 
+    int r = A.rows();
+    std::vector<Eigen::MatrixXd> transformedTensor; 
+
+    for (int i = 0; i < r ; i++)
+    {
+        Eigen::MatrixXd Hessian = Eigen::MatrixXd::Zero(T[0].rows(),T[0].cols());
+        
+        for (int j = 0; j < c; j++)
+        {
+            Hessian += A(i,j) * T[j];
+        }
+    
+        transformedTensor.push_back(Hessian);
+    }
+    return transformedTensor;
+}
+
+void mapVector(Eigen::Vector2d &limits, Eigen::VectorXd &vector)
+{
+    vector = limits(0) + ((vector.array()+1)/2) * (limits(1)-limits(0));
+}
 

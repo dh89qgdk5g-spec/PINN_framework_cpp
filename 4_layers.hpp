@@ -1,16 +1,23 @@
 #pragma once
 #include <Eigen/Dense>
-#include "Eigen/src/Core/Matrix.h"
-#include "utils_1.cpp"
-#include "activation_1.cpp"
+#include <vector>
 
+#include "1_utils.hpp"
+#include "2_activations.hpp"
 
-class Layer 
+class Layer
 {
-public: 
+public:
     Eigen::VectorXd input;
     Eigen::VectorXd output;
 
+    // 1st derivatives
+    Eigen::MatrixXd localJacobian;
+    Eigen::MatrixXd layerJacobian;
+    
+    // 2nd derivatives
+    std::vector <Eigen::MatrixXd> hessian_2; 
+    
     Eigen::MatrixXd jacobian_1;
 
     struct backwardOutput
@@ -19,9 +26,11 @@ public:
         Eigen::VectorXd error; // ∂L/∂x propagador de perdida de datos
         Eigen::VectorXd sensitivity; // ∂u/∂a propadagor de perdida física
     };
+    backwardOutput propagations;
 
     virtual Eigen::VectorXd forward(const Eigen::VectorXd input_data) = 0;
     virtual backwardOutput backward(Eigen::VectorXd error,Eigen::VectorXd sensitivity, double learning_rate) = 0; 
+    virtual std::vector <Eigen::MatrixXd> calculateHessianTensor(std::vector <Eigen::MatrixXd> prev_hessian) = 0;
     //backward(∂L/∂ŷ , \nu)
 
 };
@@ -31,6 +40,23 @@ class Sigmoid : public Layer
     public:
     Eigen::VectorXd derivative_1;
 
+
+    std::vector<Eigen::MatrixXd> calculateHessianTensor(std::vector<Eigen::MatrixXd> prev_Hessian) override
+    {
+        std::vector<Eigen::MatrixXd> layerHessians;
+        
+        for (int i = 0; i < output.size(); i++)
+        {
+            Eigen::RowVectorXd Ji = layerJacobian.row(i);
+            Eigen::MatrixXd Jt_J = Ji.transpose()*Ji;
+
+            layerHessians.push_back(sigmoid2Derivative(input(i))*Jt_J + sigmoidDerivative(input(i))*prev_Hessian[i]);
+        }
+        return layerHessians;
+    }
+
+
+
     Eigen::VectorXd forward (const Eigen::VectorXd input_data) override
     {
         //ANN
@@ -39,15 +65,31 @@ class Sigmoid : public Layer
 
         //PINN 
         derivative_1 = vectSigmoidDerivative(input);
+        localJacobian = buildJacobian(derivative_1);
         jacobian_1 = buildJacobian(derivative_1);
         
         return output;
     }
     
+    /*
     Eigen::VectorXd backward(Eigen::VectorXd error, double learning_rate) override
     {
+        //training  data
         Eigen::VectorXd grad_input = derivative_1.cwiseProduct(error);
+        
+        //phisic restrictions
         return grad_input;
+    }
+    */
+    backwardOutput backward(Eigen::VectorXd error, Eigen::VectorXd sensitivity, double learning_rate) override
+    {
+        //training data
+        propagations.error = derivative_1.cwiseProduct(error);
+
+        //physics
+        propagations.sensitivity = derivative_1.cwiseProduct(sensitivity);
+
+        return propagations;
     }
 };
 
@@ -55,6 +97,7 @@ class Relu : public Layer
 {
     public:
     Eigen::VectorXd derivative_1;
+
     Eigen::VectorXd forward(const Eigen::VectorXd input_data) override
     
     {
@@ -64,15 +107,29 @@ class Relu : public Layer
 
         //PINN
         derivative_1 = vectReluDerivative(input);
+        localJacobian = buildJacobian(derivative_1);
         jacobian_1 = buildJacobian(derivative_1);
 
         return output;
     }
 
+    /*
     Eigen::VectorXd backward(Eigen::VectorXd error, double learning_rate) override
     {
         Eigen::VectorXd grad_input = derivative_1.cwiseProduct(error);
         return grad_input;
+    }
+    */
+    
+    backwardOutput backward(Eigen::VectorXd error, Eigen::VectorXd sensitivity, double learning_rate) override
+    {
+        //training data
+        propagations.error = derivative_1.cwiseProduct(error);
+
+        //physics
+        propagations.sensitivity = derivative_1.cwiseProduct(sensitivity);
+
+        return propagations;
     }
 }; 
 
@@ -90,16 +147,30 @@ class LeakyRelu : public Layer
 
         //PINN
         derivative_1 = vectLeakyReluDerivative(input,alpha);
+        localJacobian = buildJacobian(derivative_1);
         jacobian_1 = buildJacobian(derivative_1);
 
         
         return output; 
     }
 
+    /*
     Eigen::VectorXd backward(Eigen::VectorXd error, double learning_rate) override
     {
         Eigen::VectorXd grad_input = derivative_1.cwiseProduct(error);
         return grad_input;
+    }
+    */
+
+    backwardOutput backward(Eigen::VectorXd error, Eigen::VectorXd sensitivity, double learning_rate) override
+    {
+        //training data
+        propagations.error = derivative_1.cwiseProduct(error);
+
+        //physics
+        propagations.sensitivity = derivative_1.cwiseProduct(sensitivity);
+
+        return propagations;
     }
 };
 
@@ -107,6 +178,20 @@ class Tanh : public Layer
 {
     public:
     Eigen::VectorXd derivative_1;
+
+    std::vector<Eigen::MatrixXd> calculateHessianTensor(std::vector<Eigen::MatrixXd> prev_Hessian) override
+    {
+        std::vector<Eigen::MatrixXd> layerHessians;
+        
+        for (int i = 0; i < output.size(); i++)
+        {
+            Eigen::RowVectorXd Ji = layerJacobian.row(i);
+            Eigen::MatrixXd Jt_J = Ji.transpose()*Ji;
+
+            layerHessians.push_back(tanh2Derivative(input(i))*Jt_J + tanhDerivative(input(i))*prev_Hessian[i]);
+        }
+        return layerHessians;
+    }
     
     Eigen::VectorXd forward(const Eigen::VectorXd input_data) override
     {
@@ -116,14 +201,28 @@ class Tanh : public Layer
 
         //PINN
         derivative_1 = vectTanhDerivative(input);
+        localJacobian = buildJacobian(derivative_1);
         jacobian_1 = buildJacobian(derivative_1);
         return output;
+        
     }
 
+    /*
     Eigen::VectorXd backward(Eigen::VectorXd error, double learning_rate) override
     {
         Eigen::VectorXd grad_input = derivative_1.cwiseProduct(error);
         return grad_input;
+    }
+    */
+    backwardOutput backward(Eigen::VectorXd error, Eigen::VectorXd sensitivity, double learning_rate) override
+    {
+        //training data
+        propagations.error = derivative_1.cwiseProduct(error);
+
+        //physics
+        propagations.sensitivity = derivative_1.cwiseProduct(sensitivity);
+
+        return propagations;
     }
 };
 
@@ -136,17 +235,17 @@ class Linear : public Layer
     // network components
     Eigen::MatrixXd weights; // Dimensión: (num_out, num_in)
     Eigen::VectorXd bias;    // Dimensión: (num_out)
-
-    //instance backpropagation components
-    backwardOutput propagations;
-
-    
+   
     Linear(int num_in, int num_out)
     {
         input_neuron = num_in;
         output_neuron = num_out;
         weights = uniformWeightInitializer(num_out, num_in);
         bias = biasInitializer(num_out);
+    }
+    std::vector<Eigen::MatrixXd> calculateHessianTensor(std::vector<Eigen::MatrixXd> prev_Hessian) override
+    {
+       return tensorTransform(weights, prev_Hessian);
     }
 
     Eigen::VectorXd forward(const Eigen::VectorXd input_data) override
@@ -160,9 +259,13 @@ class Linear : public Layer
         la secuencia de Multiplicaciones du/dx. 
         */
         
+        localJacobian = weights;
         jacobian_1 = weights;
         return output;
     }
+
+
+    
    
     backwardOutput backward(Eigen::VectorXd error, Eigen::VectorXd sensitivity, double learning_rate) override
     {
@@ -199,4 +302,3 @@ class Linear : public Layer
         return propagations;
     } 
 };
-
