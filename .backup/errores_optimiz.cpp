@@ -99,3 +99,31 @@
         }
     }
     
+
+
+
+
+
+
+
+
+        int initialConditionPoints = 15000;
+    Eigen::VectorXd I_x = Eigen::VectorXd::Random(initialConditionPoints);
+    Eigen::VectorXd I_y = Eigen::VectorXd::Random(initialConditionPoints);
+    Eigen::VectorXd I_t = Eigen::VectorXd::Zero(initialConditionPoints);
+    //mapVector(x_limits, I_x);
+    //mapVector(y_limits, I_y);
+    Eigen::VectorXd I_u = pow(0.01,(pow(I_x.array(),2)+pow(I_y.array(),2)));
+
+    //estructurar los datos
+        // [x_n , y_n , t_n]
+        Eigen::MatrixXd IC = Eigen::MatrixXd(initialConditionPoints,3);
+        IC.col(0) = I_x;
+        IC.col(1) = I_y; 
+        IC.col(2) = Eigen::VectorXd::Zero(initialConditionPoints);
+        
+        // [u_n , v_n]
+        Eigen::MatrixXd I_output = Eigen::MatrixXd(initialConditionPoints,1);
+        I_output.col(0) = I_u;   
+    network.IC_trueLabel = I_u;
+    

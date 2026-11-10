@@ -35,6 +35,18 @@ double sigmoid2Derivative(double x)
     return sigmoid(x) * (1-sigmoid(x)) * (1-2*sigmoid(x));
 }
 
+double sigmoid3Derivative(double x)
+{
+    /**
+    * The third derivative of the sigmoid function.
+    * @param x the input value
+    * @return the output value of the third derivative of the sigmoid function
+    */
+    double s = sigmoid(x);
+    double s1 = sigmoidDerivative(x);
+    return s1 * (1.0 - 6.0 * s + 6.0 * s * s);
+}
+
 Eigen::VectorXd vectSigmoid(const Eigen::VectorXd &x)
 {
     /**
@@ -199,6 +211,17 @@ double tanh2Derivative(double x)
    * @return the output value of the second derivative of the tanh function
    */
     return -2*custom_tanh(x)+2*pow(custom_tanh(x),3);
+}
+
+double tanh3Derivative(double x)
+{
+    /**
+    * The third derivative of the Hyperbolic Tangent (tanh) activation function.
+    * @param x the input value
+    * @return the output value of the third derivative of the tanh function
+    */
+    double t = custom_tanh(x);
+    return (1.0 - t * t) * (-2.0 + 6.0 * t * t);
 }
 
 Eigen::VectorXd vectTanh(const Eigen::VectorXd &x)

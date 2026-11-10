@@ -2,6 +2,7 @@
 // import dependencies:
 
 #include <iostream>
+#include <fstream>
 
 #include <random>
 #include <chrono>
@@ -9,58 +10,6 @@
 #include <Eigen/Dense>
 #include <vector>
 
-Eigen::VectorXd vInit(double begin, double end, int elements)
-{
-    /**
-    * Generates a vector of evenly spaced values within a specified range, 
-    * including both the starting and ending values (similar to NumPy's linspace).
-    * 
-    * @param begin the starting value of the range
-    * @param end the ending value of the range
-    * @param elements the total number of elements to generate
-    * @return an Eigen::VectorXd containing the generated sequence of values
-    */
-
-    Eigen::VectorXd v(elements);
-    double step = (end-begin)/(elements-1);
-    for (int i = 0; i < elements; i++)
-    {
-        v[i] = begin + step * i;
-    }
-    return v;
-}
-
-void vprint(const Eigen::VectorXd &v)
-{
-    /**
-    * Prints the contents of a vector to the standard output,
-    * formatted as a list enclosed in curly braces (e.g., { 1.0  2.0  3.0 }).
-    * @param v a constant reference to an Eigen::VectorXd to be printed
-    */
-
-    std::cout << "{";
-    for (int i = 0; i < v.size(); i++)
-    {
-        std::cout <<"  " << v[i]; 
-    }
-    std::cout << "  }";
-    std::cout << std::endl;
-}
-
-void mprint(const Eigen::MatrixXd &m)
-{
-    
-    for (int row = 0; row < m.rows(); row ++)
-    {
-        std::cout << "{";
-        for (int col = 0; col < m.cols(); col++)
-        {
-            std::cout << "  " << m(row, col);
-        }
-        std::cout << "  }" << std::endl;
-    }
-    
-}
 
 Eigen::MatrixXd buildJacobian(const Eigen::VectorXd &v)
 {
@@ -153,4 +102,31 @@ void mapVector(Eigen::Vector2d &limits, Eigen::VectorXd &vector)
 {
     vector = limits(0) + ((vector.array()+1)/2) * (limits(1)-limits(0));
 }
+
+void writeMatrix( std::ofstream &out ,const Eigen::MatrixXd &Matrix)
+{
+    int rows = Matrix.rows();
+    int cols = Matrix.cols();
+
+    for (int i = 0; i < rows; i++)
+    {
+        for(int j = 0; j < cols; j++)
+        {
+            out << Matrix(i,j) << ",";
+        }
+        out <<"\n";
+    }
+}
+
+void writeVector (std::ofstream &out, const Eigen::VectorXd &Vector)
+{
+    int rows = Vector.rows();
+
+    for (int i = 0; i < rows; i++)
+    {
+        out << Vector(i) << ",";
+    }
+    out << "\n";
+
+} 
 

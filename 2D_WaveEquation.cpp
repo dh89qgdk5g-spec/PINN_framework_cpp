@@ -13,50 +13,68 @@ int main()
     
     NN network;
     
-    network.add(new Linear(3,12));
+    network.add(new Linear(3,48));
     network.add(new Tanh);
 
-    network.add(new Linear(12,24));
+    network.add(new Linear(48,48));
     network.add(new Tanh);
 
-    network.add(new Linear(24,12));
+    network.add(new Linear(48,48));
     network.add(new Tanh);
 
-    network.add(new Linear(12,1));
+    network.add(new Linear(48,1));
 
     
     //  ================================== testing points ====================================
     //domain
-    Eigen::Vector2d x_limits(-1,1);
-    Eigen::Vector2d y_limits(-1,1);
+    Eigen::Vector2d x_limits(-10,10);
+    Eigen::Vector2d y_limits(-10,10);
     Eigen::Vector2d t_limits(0,10);
     
     //initial conditions: ------------------------------------------------------------------------
-    int initialConditionPoints = 300;
-    Eigen::VectorXd I_x = Eigen::VectorXd::Random(initialConditionPoints);
-    Eigen::VectorXd I_y = Eigen::VectorXd::Random(initialConditionPoints);
-    Eigen::VectorXd I_t = Eigen::VectorXd::Zero(initialConditionPoints);
-    mapVector(x_limits, I_x);
-    mapVector(y_limits, I_y);
-    Eigen::VectorXd I_u = pow(0.05,(pow(I_x.array(),2)+pow(I_y.array(),2)));
 
-    //estructurar los datos
-        // [x_n , y_n , t_n]
-        Eigen::MatrixXd IC = Eigen::MatrixXd(initialConditionPoints,3);
+
+
+    int initialConditionPoints = 5500;
+    // fracción de puntos que caen en el pulso [-1,1]^2
+    double fracInPulse = 0.7;
+    int N_in  = (int)(fracInPulse * initialConditionPoints);
+    int N_out = initialConditionPoints - N_in;
+    Eigen::VectorXd I_x(initialConditionPoints);
+    Eigen::VectorXd I_y(initialConditionPoints);
+
+    // bloque 1: uniforme en [-1,1]^2  (el pulso)
+    I_x.head(N_in) = Eigen::VectorXd::Random(N_in);
+    I_y.head(N_in) = Eigen::VectorXd::Random(N_in);
+
+    // bloque 2: uniforme en el dominio grande [-10,10]^2
+    I_x.tail(N_out) = 10.0 * Eigen::VectorXd::Random(N_out);
+    I_y.tail(N_out) = 10.0 * Eigen::VectorXd::Random(N_out);
+    Eigen::VectorXd I_t = Eigen::VectorXd::Zero(initialConditionPoints);
+    Eigen::VectorXd I_u = pow(0.01,(pow(I_x.array(),2)+pow(I_y.array(),2)));
+
+        //estructurar los datos
+        Eigen::MatrixXd IC(initialConditionPoints,3);
         IC.col(0) = I_x;
-        IC.col(1) = I_y; 
+        IC.col(1) = I_y;
+        IC.col(2) = I_t;
+        Eigen::MatrixXd I_output(initialConditionPoints,1);
+        I_output.col(0) = I_u;
+        network.IC_trueLabel = I_u;
         
-        // [u_n , v_n]
-        Eigen::MatrixXd I_output = Eigen::MatrixXd(initialConditionPoints,1);
-        I_output.col(0) = I_u;   
-    network.IC_trueLabel = I_u;
-    
+        
+        
+        
+        
     //boundary testing points:---------------------------------------------------------------
     int boundaryTestingPoints = 200;
     Eigen::VectorXd B_x = Eigen::VectorXd::Random(boundaryTestingPoints);
     Eigen::VectorXd B_y = Eigen::VectorXd::Random(boundaryTestingPoints);
     Eigen::VectorXd B_t = Eigen::VectorXd::Random(boundaryTestingPoints);
+    mapVector(x_limits, B_x);
+    mapVector(y_limits, B_y);
     mapVector(t_limits, B_t);
+
 
     // Estructurar datos de entrenamiento 
         //[x_n , y_n , t_n]
@@ -84,7 +102,7 @@ int main()
     
     
     // Equation tensting points:------------------------------------------------------------------
-    int equationTestingPoints = 100;
+    int equationTestingPoints = 200;
     Eigen::VectorXd E_x = Eigen::VectorXd::Random(equationTestingPoints);
     Eigen::VectorXd E_y = Eigen::VectorXd::Random(equationTestingPoints);
     Eigen::VectorXd E_t = Eigen::VectorXd::Random(equationTestingPoints);
@@ -100,7 +118,8 @@ int main()
     
     network.EQ_points = equationTestingPoints;
     
-    network.Train(IC,BC,EQ, 5000, 0.00005);
+    network.Train(IC,BC,EQ,50,20,2, 3000, 0.001,1, 2);
+    network.Export("parametros.txt");
 
     
     
